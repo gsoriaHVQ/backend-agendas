@@ -112,7 +112,7 @@ router.get('/test-especialidades', async (req, res) => {
         descripcion_item: row[4]
       }));
       
-      console.log(`✅ Consulta exitosa - ${data.length} registros encontrados`);
+      console.log(`Consulta exitosa - ${data.length} registros encontrados`);
       
       res.json({
         success: true,
@@ -124,7 +124,7 @@ router.get('/test-especialidades', async (req, res) => {
     } catch (err) {
       await connection.close();
       
-      console.log('❌ Error con consulta exacta:', err.message);
+      console.log(' Error con consulta exacta:', err.message);
       
       res.status(500).json({
         success: false,

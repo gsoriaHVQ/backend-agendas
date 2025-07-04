@@ -2,10 +2,10 @@ const oracledb = require('oracledb');
 
 // Configuración de la base de datos
 const dbConfig = {
-  user: process.env.DB_USER || 'tu_usuario',
-  password: process.env.DB_PASSWORD || 'tu_password',
-  connectString: process.env.DB_CONNECT_STRING || 'localhost:1521/XE',
-  // Opcional: configuraciones adicionales
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  connectString: process.env.DB_CONNECT_STRING,
+  
   poolMin: 2,
   poolMax: 10,
   poolIncrement: 1,
