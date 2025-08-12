@@ -1,90 +1,32 @@
+//Consulta de medicos
 const getConnection = require('../db/connect');
+const MedicoService = require('../services/MedicoService');
+const { errorHandler } = require('../utils/errors');
+const { apiLogger } = require('../utils/logger');
 
 const getMedicos = async (req, res) => {
+  let connection;
+  
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
+    const medicoService = new MedicoService(connection);
     
-    console.log('🔍 Ejecutando consulta de médicos con especialidades...');
+    const resultado = await medicoService.obtenerTodosMedicos();
     
-    // Usar la consulta exacta que funciona según el usuario
-    const result = await connection.execute(`
-      SELECT DISTINCT
-        pr.CD_PRESTADOR,
-        pr.NM_PRESTADOR,
-        pr.NM_MNEMONICO,
-        ia.CD_ITEM_AGENDAMENTO,
-        ia.DS_ITEM_AGENDAMENTO
-      FROM DBAMV.AGENDA_CENTRAL ac
-      JOIN DBAMV.PRESTADOR pr ON pr.CD_PRESTADOR = ac.CD_PRESTADOR
-      JOIN DBAMV.AGENDA_CENTRAL_ITEM_AGENDA acia ON acia.CD_AGENDA_CENTRAL = ac.CD_AGENDA_CENTRAL
-      JOIN DBAMV.ITEM_AGENDAMENTO ia ON ia.CD_ITEM_AGENDAMENTO = acia.CD_ITEM_AGENDAMENTO
-      WHERE pr.TP_SITUACAO = 'A'
-        AND ia.SN_ATIVO = 'S'
-      ORDER BY pr.NM_PRESTADOR, ia.DS_ITEM_AGENDAMENTO
-    `);
-
-    await connection.close();
-
-    const data = result.rows.map(row => ({
-      codigo_prestador: row[0],
-      nombre_prestador: row[1],
-      mnemonico: row[2],
-      codigo_item_agendamiento: row[3],
-      descripcion_agendamiento: row[4]
-    }));
-
-    console.log(`✅ Consulta exitosa - ${data.length} médicos con especialidades encontrados`);
-
     res.status(200).json({
       success: true,
-      data: data,
-      total: data.length,
-      message: 'Médicos con especialidades obtenidos correctamente'
+      ...resultado
     });
     
-  } catch (err) {
-    console.error('❌ Error al consultar médicos con especialidades:', err.message);
-    
-    // Fallback: Si falla la consulta principal, devolver solo prestadores
-    try {
-      const connection = await getConnection();
-      const fallbackResult = await connection.execute(`
-        SELECT 
-          CD_PRESTADOR,
-          NM_PRESTADOR,
-          NM_MNEMONICO
-        FROM DBAMV.PRESTADOR 
-        WHERE TP_SITUACAO = 'A'
-        ORDER BY NM_PRESTADOR
-      `);
-      
-      await connection.close();
-      
-      const fallbackData = fallbackResult.rows.map(row => ({
-        codigo_prestador: row[0],
-        nombre_prestador: row[1],
-        mnemonico: row[2],
-        codigo_item_agendamiento: null,
-        descripcion_agendamiento: 'CONSULTA GENERAL'
-      }));
-      
-      console.log(`📋 Fallback ejecutado - ${fallbackData.length} prestadores encontrados`);
-      
-      res.status(200).json({
-        success: true,
-        data: fallbackData,
-        total: fallbackData.length,
-        message: 'Prestadores obtenidos sin especialidades específicas',
-        warning: 'No se pudieron obtener las especialidades: ' + err.message
-      });
-      
-    } catch (fallbackErr) {
-      console.error('❌ Error en fallback:', fallbackErr.message);
-      res.status(500).json({ 
-        success: false,
-        error: 'Error al consultar los médicos',
-        message: `Error principal: ${err.message}. Error fallback: ${fallbackErr.message}`
-      });
+  } catch (error) {
+    errorHandler(error, req, res, () => {});
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        apiLogger.error('Error cerrando conexión', { error: closeError.message });
+      }
     }
   }
 };
@@ -165,108 +107,141 @@ const getDatabaseInfo = async (req, res) => {
   }
 };
 
-// GET /api/medicos/especialidad/:especialidad
 const getMedicosByEspecialidad = async (req, res) => {
-  const { especialidad } = req.params;
+  let connection;
+  
   try {
-    const connection = await getConnection();
-    const result = await connection.execute(`
-      SELECT DISTINCT
-        pr.CD_PRESTADOR,
-        pr.NM_PRESTADOR,
-        pr.NM_MNEMONICO,
-        ia.CD_ITEM_AGENDAMENTO,
-        ia.DS_ITEM_AGENDAMENTO
-      FROM DBAMV.AGENDA_CENTRAL ac
-      JOIN DBAMV.PRESTADOR pr ON pr.CD_PRESTADOR = ac.CD_PRESTADOR
-      JOIN DBAMV.AGENDA_CENTRAL_ITEM_AGENDA acia ON acia.CD_AGENDA_CENTRAL = ac.CD_AGENDA_CENTRAL
-      JOIN DBAMV.ITEM_AGENDAMENTO ia ON ia.CD_ITEM_AGENDAMENTO = acia.CD_ITEM_AGENDAMENTO
-      WHERE pr.TP_SITUACAO = 'A'
-        AND ia.SN_ATIVO = 'S'
-        AND LOWER(ia.DS_ITEM_AGENDAMENTO) LIKE :especialidad
-      ORDER BY pr.NM_PRESTADOR, ia.DS_ITEM_AGENDAMENTO
-    `, [`%${especialidad.toLowerCase()}%`]);
-    await connection.close();
-    const data = result.rows.map(row => ({
-      codigo_prestador: row[0],
-      nombre_prestador: row[1],
-      mnemonico: row[2],
-      codigo_item_agendamiento: row[3],
-      descripcion_agendamiento: row[4]
-    }));
-    res.status(200).json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    connection = await getConnection();
+    const medicoService = new MedicoService(connection);
+    
+    const resultado = await medicoService.buscarPorEspecialidad(req.params.especialidad);
+    
+    res.status(200).json({
+      success: true,
+      ...resultado
+    });
+    
+  } catch (error) {
+    errorHandler(error, req, res, () => {});
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        apiLogger.error('Error cerrando conexión', { error: closeError.message });
+      }
+    }
   }
 };
 
-// GET /api/medicos/item/:codigo_item
 const getMedicosByCodigoItem = async (req, res) => {
-  const { codigo_item } = req.params;
+  let connection;
+  
   try {
-    const connection = await getConnection();
-    const result = await connection.execute(`
-      SELECT DISTINCT
-        pr.CD_PRESTADOR,
-        pr.NM_PRESTADOR,
-        pr.NM_MNEMONICO,
-        ia.CD_ITEM_AGENDAMENTO,
-        ia.DS_ITEM_AGENDAMENTO
-      FROM DBAMV.AGENDA_CENTRAL ac
-      JOIN DBAMV.PRESTADOR pr ON pr.CD_PRESTADOR = ac.CD_PRESTADOR
-      JOIN DBAMV.AGENDA_CENTRAL_ITEM_AGENDA acia ON acia.CD_AGENDA_CENTRAL = ac.CD_AGENDA_CENTRAL
-      JOIN DBAMV.ITEM_AGENDAMENTO ia ON ia.CD_ITEM_AGENDAMENTO = acia.CD_ITEM_AGENDAMENTO
-      WHERE pr.TP_SITUACAO = 'A'
-        AND ia.SN_ATIVO = 'S'
-        AND ia.CD_ITEM_AGENDAMENTO = :codigo_item
-      ORDER BY pr.NM_PRESTADOR, ia.DS_ITEM_AGENDAMENTO
-    `, [codigo_item]);
-    await connection.close();
-    const data = result.rows.map(row => ({
-      codigo_prestador: row[0],
-      nombre_prestador: row[1],
-      mnemonico: row[2],
-      codigo_item_agendamiento: row[3],
-      descripcion_agendamiento: row[4]
-    }));
-    res.status(200).json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    connection = await getConnection();
+    const medicoService = new MedicoService(connection);
+    
+    const resultado = await medicoService.buscarPorCodigoItem(req.params.codigo_item);
+    
+    res.status(200).json({
+      success: true,
+      ...resultado
+    });
+    
+  } catch (error) {
+    errorHandler(error, req, res, () => {});
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        apiLogger.error('Error cerrando conexión', { error: closeError.message });
+      }
+    }
   }
 };
 
-// GET /api/medicos/nombre/:nombre
 const getMedicosByNombre = async (req, res) => {
-  const { nombre } = req.params;
+  let connection;
+  
   try {
-    const connection = await getConnection();
-    const result = await connection.execute(`
-      SELECT DISTINCT
-        pr.CD_PRESTADOR,
-        pr.NM_PRESTADOR,
-        pr.NM_MNEMONICO,
-        ia.CD_ITEM_AGENDAMENTO,
-        ia.DS_ITEM_AGENDAMENTO
-      FROM DBAMV.AGENDA_CENTRAL ac
-      JOIN DBAMV.PRESTADOR pr ON pr.CD_PRESTADOR = ac.CD_PRESTADOR
-      JOIN DBAMV.AGENDA_CENTRAL_ITEM_AGENDA acia ON acia.CD_AGENDA_CENTRAL = ac.CD_AGENDA_CENTRAL
-      JOIN DBAMV.ITEM_AGENDAMENTO ia ON ia.CD_ITEM_AGENDAMENTO = acia.CD_ITEM_AGENDAMENTO
-      WHERE pr.TP_SITUACAO = 'A'
-        AND ia.SN_ATIVO = 'S'
-        AND LOWER(pr.NM_PRESTADOR) LIKE :nombre
-      ORDER BY pr.NM_PRESTADOR, ia.DS_ITEM_AGENDAMENTO
-    `, [`%${nombre.toLowerCase()}%`]);
-    await connection.close();
-    const data = result.rows.map(row => ({
-      codigo_prestador: row[0],
-      nombre_prestador: row[1],
-      mnemonico: row[2],
-      codigo_item_agendamiento: row[3],
-      descripcion_agendamiento: row[4]
-    }));
-    res.status(200).json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    connection = await getConnection();
+    const medicoService = new MedicoService(connection);
+    
+    const resultado = await medicoService.buscarPorNombre(req.params.nombre);
+    
+    res.status(200).json({
+      success: true,
+      ...resultado
+    });
+    
+  } catch (error) {
+    errorHandler(error, req, res, () => {});
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        apiLogger.error('Error cerrando conexión', { error: closeError.message });
+      }
+    }
+  }
+};
+
+// Nuevo endpoint para obtener especialidades
+const getEspecialidades = async (req, res) => {
+  let connection;
+  
+  try {
+    connection = await getConnection();
+    const medicoService = new MedicoService(connection);
+    
+    const resultado = await medicoService.obtenerEspecialidades();
+    
+    res.status(200).json({
+      success: true,
+      ...resultado
+    });
+    
+  } catch (error) {
+    errorHandler(error, req, res, () => {});
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        apiLogger.error('Error cerrando conexión', { error: closeError.message });
+      }
+    }
+  }
+};
+
+// Nuevo endpoint para estadísticas
+const getEstadisticasMedicos = async (req, res) => {
+  let connection;
+  
+  try {
+    connection = await getConnection();
+    const medicoService = new MedicoService(connection);
+    
+    const estadisticas = await medicoService.obtenerEstadisticas();
+    
+    res.status(200).json({
+      success: true,
+      data: estadisticas,
+      message: 'Estadísticas de médicos generadas correctamente'
+    });
+    
+  } catch (error) {
+    errorHandler(error, req, res, () => {});
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        apiLogger.error('Error cerrando conexión', { error: closeError.message });
+      }
+    }
   }
 };
 
@@ -275,5 +250,7 @@ module.exports = {
   getDatabaseInfo,
   getMedicosByEspecialidad,
   getMedicosByCodigoItem,
-  getMedicosByNombre
+  getMedicosByNombre,
+  getEspecialidades,
+  getEstadisticasMedicos
 };

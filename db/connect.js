@@ -12,7 +12,6 @@ const dbConfig = {
   poolTimeout: 300
 };
 
-// Función para obtener una conexión
 async function getConnection() {
   try {
     const connection = await oracledb.getConnection(dbConfig);
@@ -24,7 +23,7 @@ async function getConnection() {
   }
 }
 
-// Función para inicializar el pool de conexiones (opcional)
+// pool de conexiones a la BD
 async function initializePool() {
   try {
     await oracledb.createPool(dbConfig);
@@ -35,7 +34,7 @@ async function initializePool() {
   }
 }
 
-// Función para cerrar el pool
+
 async function closePool() {
   try {
     await oracledb.getPool().close();

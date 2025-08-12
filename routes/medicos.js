@@ -1,17 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const { getMedicos, getDatabaseInfo, getMedicosByEspecialidad, getMedicosByCodigoItem, getMedicosByNombre } = require('../controllers/medicosController');
+const { 
+  getMedicos, 
+  getDatabaseInfo, 
+  getMedicosByEspecialidad, 
+  getMedicosByCodigoItem, 
+  getMedicosByNombre,
+  getEspecialidades,
+  getEstadisticasMedicos
+} = require('../controllers/medicosController');
 
-// GET /medicos - Obtener todos los médicos con especialidades
+const {
+  validateEspecialidad,
+  validateNombre,
+  validateCodigoItem
+} = require('../middleware/validations');
+
+// GET /api/medicos - Obtener todos los médicos con especialidades
 router.get('/', getMedicos);
 
-// GET /medicos/db-info - Obtener información de estructura de BD
+// GET /api/medicos/especialidades - Obtener solo especialidades
+router.get('/especialidades', getEspecialidades);
+
+// GET /api/medicos/estadisticas - Obtener estadísticas
+router.get('/estadisticas', getEstadisticasMedicos);
+
+// GET /api/medicos/db-info - Obtener información de estructura de BD
 router.get('/db-info', getDatabaseInfo);
 
-// Nuevos endpoints para búsqueda avanzada
-router.get('/especialidad/:especialidad', getMedicosByEspecialidad);
-router.get('/item/:codigo_item', getMedicosByCodigoItem);
-router.get('/nombre/:nombre', getMedicosByNombre);
+// Búsqueda avanzada con validaciones
+router.get('/especialidad/:especialidad', validateEspecialidad, getMedicosByEspecialidad);
+router.get('/item/:codigo_item', validateCodigoItem, getMedicosByCodigoItem);
+router.get('/nombre/:nombre', validateNombre, getMedicosByNombre);
 
 // GET /medicos/debug - Ver datos de diagnóstico de forma legible
 router.get('/debug', async (req, res) => {

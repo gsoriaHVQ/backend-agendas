@@ -1,8 +1,3 @@
-/**
- * Modelo Medico
- * Representa la estructura de un médico con su especialidad
- */
-
 class Medico {
   constructor(data) {
     this.codigo_item = data.codigo_item;

@@ -6,7 +6,9 @@ const {
   createAgenda, 
   updateAgenda, 
   deleteAgenda,
-  getAgendasByPrestador 
+  getAgendasByPrestador,
+  getEstadisticasAgendas,
+  cancelarAgenda
 } = require('../controllers/agendasController');
 
 const {
@@ -16,22 +18,28 @@ const {
   validateCodigoPrestador
 } = require('../middleware/validations');
 
-// GET /agendas - Obtener todas las agendas
+// GET /api/agendas - Obtener todas las agendas
 router.get('/', getAgendas);
 
-// GET /agendas/:id - Obtener agenda por ID
-router.get('/:id', validateId, getAgendaById);
+// GET /api/agendas/estadisticas - Obtener estadísticas de agendas
+router.get('/estadisticas', getEstadisticasAgendas);
 
-// GET /agendas/prestador/:codigo_prestador - Obtener agendas por prestador
+// GET /api/agendas/prestador/:codigo_prestador - Obtener agendas por prestador
 router.get('/prestador/:codigo_prestador', validateCodigoPrestador, getAgendasByPrestador);
 
-// POST /agendas - Crear nueva agenda
+// GET /api/agendas/:id - Obtener agenda por ID
+router.get('/:id', validateId, getAgendaById);
+
+// POST /api/agendas - Crear nueva agenda
 router.post('/', validateAgenda, createAgenda);
 
-// PUT /agendas/:id - Actualizar agenda existente
+// PUT /api/agendas/:id - Actualizar agenda existente
 router.put('/:id', validateId, validateAgendaUpdate, updateAgenda);
 
-// DELETE /agendas/:id - Eliminar agenda
+// PUT /api/agendas/:id/cancelar - Cancelar agenda
+router.put('/:id/cancelar', validateId, cancelarAgenda);
+
+// DELETE /api/agendas/:id - Eliminar agenda
 router.delete('/:id', validateId, deleteAgenda);
 
 module.exports = router; 
