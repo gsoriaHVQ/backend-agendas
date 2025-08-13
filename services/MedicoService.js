@@ -27,51 +27,6 @@ class MedicoService {
     }
   }
 
- //GET ALL medicos
-  async obtenerTodosMedicos() {
-    try {
-      apiLogger.info('Iniciando obtención de todos los médicos');
-      
-      try {
-        const medicos = await this.medicoRepository.findAll();
-        
-        if (medicos.length === 0) {
-          apiLogger.warn('No se encontraron médicos con especialidades');
-          return {
-            data: [],
-            total: 0,
-            message: 'No se encontraron médicos disponibles',
-            fallback: false
-          };
-        }
-        
-        return {
-          data: medicos,
-          total: medicos.length,
-          message: 'Médicos con especialidades obtenidos correctamente',
-          fallback: false
-        };
-        
-      } catch (error) {
-        // Intentar fallback
-        apiLogger.warn('Error en consulta principal, intentando fallback', { error: error.message });
-        
-        const prestadores = await this.medicoRepository.findPrestadoresFallback();
-        
-        return {
-          data: prestadores,
-          total: prestadores.length,
-          message: 'Prestadores obtenidos sin especialidades específicas',
-          fallback: true,
-          warning: `No se pudieron obtener las especialidades: ${error.message}`
-        };
-      }
-      
-    } catch (error) {
-      apiLogger.error('Error completo al obtener médicos', { error: error.message });
-      throw error;
-    }
-  }
 
   //GET medicos por especialidad
   async buscarPorEspecialidad(especialidad) {
@@ -121,18 +76,6 @@ class MedicoService {
     };
   }
 
- //GET especialidades
-  async obtenerEspecialidades() {
-    apiLogger.info('Obteniendo especialidades disponibles');
-    
-    const especialidades = await this.medicoRepository.findEspecialidades();
-    
-    return {
-      data: especialidades,
-      total: especialidades.length,
-      message: 'Especialidades obtenidas correctamente'
-    };
-  }
 
   
   async obtenerEstadisticas() {

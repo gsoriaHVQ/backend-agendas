@@ -1,13 +1,20 @@
-FROM node:22
+# Usa una imagen oficial de Node.js
+FROM node:18
 
+# Crea el directorio de la app
 WORKDIR /usr/src/app
 
+# Copia los archivos de dependencias
 COPY package*.json ./
 
+# Instala las dependencias
 RUN npm install
 
+# Copia el resto del código
 COPY . .
 
-EXPOSE 3000
+# Expone el puerto (ajusta si usas otro)
+EXPOSE 3001
 
-CMD ["npm", "start"]
+# Comando para iniciar la app
+CMD ["node", "app.js"]

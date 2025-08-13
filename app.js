@@ -15,6 +15,7 @@ const agendasRoutes = require('./routes/agendas');
 const medicosRoutes = require('./routes/medicos');
 const catalogosRoutes = require('./routes/catalogos');
 const agendaCustomRoutes = require('./routes/agendaCustom');
+const externalRoutes = require('./routes/external');
 
 // Servicios
 const MedicoService = require('./services/MedicoService');
@@ -68,6 +69,7 @@ class App {
     this.app.use('/api/medicos', medicosRoutes);
     this.app.use('/api/catalogos', catalogosRoutes);
     this.app.use('/api/agnd-agenda', agendaCustomRoutes);
+    this.app.use('/api/external', externalRoutes);
   }
 
   setupErrorHandling() {
@@ -126,51 +128,23 @@ class App {
 
   // Endpoints de compatibilidad (mantener API existente)
   async getEspecialidades(req, res) {
-    let connection;
     try {
-      connection = await getConnection();
-      const medicoService = new MedicoService(connection);
-      
-      const resultado = await medicoService.obtenerEspecialidades();
-      
-      res.json({
-        success: true,
-        ...resultado
-      });
+      const ExternalMedicosService = require('./services/ExternalMedicosService');
+      const external = new ExternalMedicosService();
+      const data = await external.obtenerEspecialidades();
+      res.json({ success: true, data });
     } catch (error) {
       errorHandler(error, req, res, () => {});
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch (closeError) {
-          appLogger.error('Error cerrando conexión', { error: closeError.message });
-        }
-      }
     }
   }
   async getMedicosCompatibility(req, res) {
-    let connection;
     try {
-      connection = await getConnection();
-      const medicoService = new MedicoService(connection);
-      
-      const resultado = await medicoService.obtenerTodosMedicos();
-      
-      res.json({
-        success: true,
-        data: resultado.data
-      });
+      const ExternalMedicosService = require('./services/ExternalMedicosService');
+      const external = new ExternalMedicosService();
+      const data = await external.obtenerMedicos();
+      res.json({ success: true, data });
     } catch (error) {
       errorHandler(error, req, res, () => {});
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch (closeError) {
-          appLogger.error('Error cerrando conexión', { error: closeError.message });
-        }
-      }
     }
   }
 

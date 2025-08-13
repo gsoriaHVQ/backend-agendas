@@ -161,41 +161,7 @@ class MedicoRepository {
     }
   }
 
-  /**
-   * Fallback: obtiene solo prestadores activos si falla la consulta principal
-   */
-  async findPrestadoresFallback() {
-    try {
-      dbLogger.warn('Ejecutando consulta fallback de prestadores');
-      
-      const query = `
-        SELECT 
-          CD_PRESTADOR,
-          NM_PRESTADOR,
-          NM_MNEMONICO
-        FROM DBAMV.PRESTADOR 
-        WHERE TP_SITUACAO = 'A'
-        ORDER BY NM_PRESTADOR
-      `;
-      
-      const result = await this.dbConnection.execute(query);
-      
-      const prestadores = result.rows.map(row => ({
-        codigo_prestador: row[0],
-        nombre_prestador: row[1],
-        mnemonico: row[2],
-        codigo_item_agendamiento: null,
-        descripcion_agendamiento: 'CONSULTA GENERAL'
-      }));
-      
-      dbLogger.dbSuccess('findPrestadoresFallback', { count: prestadores.length });
-      return prestadores;
-      
-    } catch (error) {
-      dbLogger.dbError('findPrestadoresFallback', error);
-      throw new DatabaseError('Error en consulta fallback de prestadores', error);
-    }
-  }
+  
 }
 
 module.exports = MedicoRepository;

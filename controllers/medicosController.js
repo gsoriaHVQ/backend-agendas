@@ -1,33 +1,18 @@
 //Consulta de medicos
 const getConnection = require('../db/connect');
 const MedicoService = require('../services/MedicoService');
+const ExternalMedicosService = require('../services/ExternalMedicosService');
 const { errorHandler } = require('../utils/errors');
 const { apiLogger } = require('../utils/logger');
 
 const getMedicos = async (req, res) => {
-  let connection;
-  
   try {
-    connection = await getConnection();
-    const medicoService = new MedicoService(connection);
-    
-    const resultado = await medicoService.obtenerTodosMedicos();
-    
-    res.status(200).json({
-      success: true,
-      ...resultado
-    });
-    
+    const external = new ExternalMedicosService();
+    const situationType = req.query.situationType || 'ACTIVE';
+    const data = await external.obtenerMedicos({ situationType });
+    res.status(200).json({ success: true, data, total: Array.isArray(data) ? data.length : undefined });
   } catch (error) {
     errorHandler(error, req, res, () => {});
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        apiLogger.error('Error cerrando conexión', { error: closeError.message });
-      }
-    }
   }
 };
 
@@ -188,31 +173,14 @@ const getMedicosByNombre = async (req, res) => {
   }
 };
 
-// Nuevo endpoint para obtener especialidades
+// Nuevo endpoint para obtener especialidades (desde API externa)
 const getEspecialidades = async (req, res) => {
-  let connection;
-  
   try {
-    connection = await getConnection();
-    const medicoService = new MedicoService(connection);
-    
-    const resultado = await medicoService.obtenerEspecialidades();
-    
-    res.status(200).json({
-      success: true,
-      ...resultado
-    });
-    
+    const external = new ExternalMedicosService();
+    const data = await external.obtenerEspecialidades();
+    res.status(200).json({ success: true, data, total: Array.isArray(data) ? data.length : undefined });
   } catch (error) {
     errorHandler(error, req, res, () => {});
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        apiLogger.error('Error cerrando conexión', { error: closeError.message });
-      }
-    }
   }
 };
 
