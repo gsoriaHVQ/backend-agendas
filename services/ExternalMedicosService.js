@@ -5,7 +5,8 @@ class ExternalMedicosService {
   constructor() {
     this.baseUrl = process.env.EXTERNAL_API_BASE_URL || 'http://10.129.180.161:36560/api3/v1';
     this.medicosPath = process.env.EXTERNAL_MEDICOS_ENDPOINT || '/medico';
-    this.especialidadesPath = process.env.EXTERNAL_ESPECIALIDADES_ENDPOINT || '/Especialidades';
+    // Forzar endpoint oficial de especialidades
+    this.especialidadesPath = '/especialidades/agenda';
   }
 
   async obtenerMedicos(options = {}) {
@@ -34,7 +35,24 @@ class ExternalMedicosService {
       throw new Error(`Error al obtener especialidades externas: ${res.status} | url=${url} | ${reason}`);
     }
     const data = await res.json();
+    // Normalizar salida al esquema requerido
+    // { especialidadId, descripcion, tipo, icono }
+    if (Array.isArray(data)) {
+      return data.map((item) => this._mapEspecialidad(item));
+    }
+    if (data && typeof data === 'object') {
+      return this._mapEspecialidad(data);
+    }
     return data;
+  }
+
+  _mapEspecialidad(item) {
+    return {
+      especialidadId: item.especialidadId ?? item.id ?? item.codigo ?? item.code ?? null,
+      descripcion: item.descripcion ?? item.nombre ?? item.name ?? item.description ?? '',
+      tipo: item.tipo ?? item.type ?? null,
+      icono: item.icono ?? item.icon ?? null
+    };
   }
 }
 

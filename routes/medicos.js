@@ -47,8 +47,7 @@ router.get('/debug', async (req, res) => {
        ORDER BY table_name`
     );
     
-    console.log('🔍 Tablas encontradas con ITEM/AGENDAMENTO:');
-    itemTables.rows.forEach(row => console.log(`   - ${row[0]}`));
+    // Logs removidos
     
     // Verificar específicamente la tabla ITEM_AGENDAMENTO
     let itemAgendamentoInfo = null;
@@ -103,7 +102,6 @@ router.get('/test-especialidades', async (req, res) => {
     const getConnection = require('../db/connect');
     const connection = await getConnection();
     
-    console.log('🧪 Probando consulta exacta del usuario...');
     
     try {
       // Consulta exacta del usuario
@@ -132,7 +130,7 @@ router.get('/test-especialidades', async (req, res) => {
         descripcion_item: row[4]
       }));
       
-      console.log(`Consulta exitosa - ${data.length} registros encontrados`);
+      // Logs removidos
       
       res.json({
         success: true,
@@ -144,7 +142,7 @@ router.get('/test-especialidades', async (req, res) => {
     } catch (err) {
       await connection.close();
       
-      console.log(' Error con consulta exacta:', err.message);
+      // Logs removidos
       
       res.status(500).json({
         success: false,

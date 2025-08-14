@@ -15,7 +15,6 @@ const dbConfig = {
 async function getConnection() {
   try {
     const connection = await oracledb.getConnection(dbConfig);
-    console.log('Conexión a la base de datos establecida');
     return connection;
   } catch (error) {
     console.error('Error al conectar con la base de datos:', error);
@@ -27,7 +26,6 @@ async function getConnection() {
 async function initializePool() {
   try {
     await oracledb.createPool(dbConfig);
-    console.log('Pool de conexiones inicializado');
   } catch (error) {
     console.error('Error al inicializar el pool:', error);
     throw error;
@@ -38,7 +36,6 @@ async function initializePool() {
 async function closePool() {
   try {
     await oracledb.getPool().close();
-    console.log('Pool de conexiones cerrado');
   } catch (error) {
     console.error('Error al cerrar el pool:', error);
   }

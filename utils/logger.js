@@ -35,13 +35,13 @@ class Logger {
 
   info(message, meta = {}) {
     if (this._shouldLog('INFO')) {
-      console.log(this._formatMessage('INFO', message, meta));
+      console.info(this._formatMessage('INFO', message, meta));
     }
   }
 
   debug(message, meta = {}) {
     if (this._shouldLog('DEBUG')) {
-      console.log(this._formatMessage('DEBUG', message, meta));
+      console.debug(this._formatMessage('DEBUG', message, meta));
     }
   }
 
