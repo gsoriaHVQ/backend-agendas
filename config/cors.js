@@ -20,8 +20,14 @@ const ALLOWED_HEADERS = ['Content-Type', 'Authorization', 'X-Requested-With'];
 
 class CorsConfig {
   static getOptions() {
+    const allowAll = process.env.CORS_ALLOW_ALL === 'true';
+    const whitelist = this.isDevelopment() ? ALLOWED_ORIGINS : this.getProductionOrigins();
     return {
-      origin: this.isDevelopment() ? ALLOWED_ORIGINS : this.getProductionOrigins(),
+      // Cuando allowAll está activo, reflejar el origen (compatibe con credentials)
+      origin: allowAll ? true : function(origin, callback) {
+        if (!origin) return callback(null, false);
+        return whitelist.includes(origin) ? callback(null, true) : callback(null, false);
+      },
       methods: ALLOWED_METHODS,
       allowedHeaders: ALLOWED_HEADERS,
       credentials: true,
