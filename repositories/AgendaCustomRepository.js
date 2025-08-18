@@ -16,7 +16,8 @@ class AgendaCustomRepository {
       codigo_item_agendamiento: row[3],
       codigo_dia: row[4],
       hora_inicio: row[5],
-      hora_fin: row[6]
+      hora_fin: row[6],
+      tipo: row[7]
     };
   }
 
@@ -30,7 +31,8 @@ class AgendaCustomRepository {
           a.CD_ITEM_AGENDAMENTO,
           a.CD_DIA,
           a.HORA_INICIO,
-          a.HORA_FIN
+          a.HORA_FIN,
+          a.TIPO
         FROM ${this.schema}.AGND_AGENDA a
         ORDER BY a.CD_AGENDA
       `;
@@ -52,7 +54,8 @@ class AgendaCustomRepository {
           a.CD_ITEM_AGENDAMENTO,
           a.CD_DIA,
           a.HORA_INICIO,
-          a.HORA_FIN
+          a.HORA_FIN,
+          a.TIPO
         FROM ${this.schema}.AGND_AGENDA a
         WHERE a.CD_AGENDA = :id
       `;
@@ -73,11 +76,12 @@ class AgendaCustomRepository {
 
       const query = `
         INSERT INTO ${this.schema}.AGND_AGENDA (
-          CD_AGENDA, CD_CONSULTORIO, CD_PRESTADOR, CD_ITEM_AGENDAMENTO, CD_DIA, HORA_INICIO, HORA_FIN
+          CD_AGENDA, CD_CONSULTORIO, CD_PRESTADOR, CD_ITEM_AGENDAMENTO, CD_DIA, HORA_INICIO, HORA_FIN, TIPO
         ) VALUES (
           :cd_agenda, :cd_consultorio, :cd_prestador, :cd_item, :cd_dia,
           TO_DATE(:hora_inicio, 'YYYY-MM-DD HH24:MI'),
-          TO_DATE(:hora_fin, 'YYYY-MM-DD HH24:MI')
+          TO_DATE(:hora_fin, 'YYYY-MM-DD HH24:MI'),
+          :tipo
         )
       `;
       const params = {
@@ -87,7 +91,8 @@ class AgendaCustomRepository {
         cd_item: data.codigo_item_agendamiento,
         cd_dia: data.codigo_dia,
         hora_inicio: data.hora_inicio,
-        hora_fin: data.hora_fin
+        hora_fin: data.hora_fin,
+        tipo: data.tipo ? String(data.tipo).trim().toUpperCase().slice(0, 1) : null
       };
       await this.dbConnection.execute(query, params, { autoCommit: true });
       dbLogger.dbSuccess('AGND create', data);
@@ -111,6 +116,7 @@ class AgendaCustomRepository {
       if (data.codigo_dia) { updates.push('CD_DIA = :cd_dia'); params.cd_dia = data.codigo_dia; }
       if (data.hora_inicio) { updates.push("HORA_INICIO = TO_DATE(:hora_inicio, 'YYYY-MM-DD HH24:MI')"); params.hora_inicio = data.hora_inicio; }
       if (data.hora_fin) { updates.push("HORA_FIN = TO_DATE(:hora_fin, 'YYYY-MM-DD HH24:MI')"); params.hora_fin = data.hora_fin; }
+      if (data.tipo !== undefined) { updates.push('TIPO = :tipo'); params.tipo = String(data.tipo).trim().toUpperCase().slice(0, 1); }
 
       if (updates.length === 0) return true;
 
