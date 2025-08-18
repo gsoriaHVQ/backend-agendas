@@ -1,6 +1,5 @@
 //Consulta de medicos
-const getConnection = require('../db/connect');
-const MedicoService = require('../services/MedicoService');
+const getConnection = require('../db/connect'); // Mantenido solo para getDatabaseInfo
 const ExternalMedicosService = require('../services/ExternalMedicosService');
 const { errorHandler } = require('../utils/errors');
 const { apiLogger } = require('../utils/logger');
@@ -93,83 +92,71 @@ const getDatabaseInfo = async (req, res) => {
 };
 
 const getMedicosByEspecialidad = async (req, res) => {
-  let connection;
-  
   try {
-    connection = await getConnection();
-    const medicoService = new MedicoService(connection);
+    const external = new ExternalMedicosService();
+    const especialidad = req.params.especialidad;
+    const situationType = req.query.situationType || 'ACTIVE';
     
-    const resultado = await medicoService.buscarPorEspecialidad(req.params.especialidad);
+    apiLogger.info('Buscando médicos por especialidad desde API externa', { especialidad });
+    
+    const medicos = await external.buscarMedicosPorEspecialidad(especialidad, { situationType });
     
     res.status(200).json({
       success: true,
-      ...resultado
+      data: medicos,
+      total: medicos.length,
+      message: `Médicos encontrados para la especialidad: ${especialidad}`,
+      criterio: { tipo: 'especialidad', valor: especialidad }
     });
     
   } catch (error) {
     errorHandler(error, req, res, () => {});
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        apiLogger.error('Error cerrando conexión', { error: closeError.message });
-      }
-    }
   }
 };
 
 const getMedicosByCodigoItem = async (req, res) => {
-  let connection;
-  
   try {
-    connection = await getConnection();
-    const medicoService = new MedicoService(connection);
+    const external = new ExternalMedicosService();
+    const codigoItem = req.params.codigo_item;
+    const situationType = req.query.situationType || 'ACTIVE';
     
-    const resultado = await medicoService.buscarPorCodigoItem(req.params.codigo_item);
+    apiLogger.info('Buscando médicos por código de item desde API externa', { codigoItem });
+    
+    const medicos = await external.buscarMedicosPorCodigoItem(codigoItem, { situationType });
     
     res.status(200).json({
       success: true,
-      ...resultado
+      data: medicos,
+      total: medicos.length,
+      message: `Médicos encontrados para el código de item: ${codigoItem}`,
+      criterio: { tipo: 'codigo_item', valor: codigoItem }
     });
     
   } catch (error) {
     errorHandler(error, req, res, () => {});
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        apiLogger.error('Error cerrando conexión', { error: closeError.message });
-      }
-    }
   }
 };
 
 const getMedicosByNombre = async (req, res) => {
-  let connection;
-  
   try {
-    connection = await getConnection();
-    const medicoService = new MedicoService(connection);
+    const external = new ExternalMedicosService();
+    const nombre = req.params.nombre;
+    const situationType = req.query.situationType || 'ACTIVE';
     
-    const resultado = await medicoService.buscarPorNombre(req.params.nombre);
+    apiLogger.info('Buscando médicos por nombre desde API externa', { nombre });
+    
+    const medicos = await external.buscarMedicosPorNombre(nombre, { situationType });
     
     res.status(200).json({
       success: true,
-      ...resultado
+      data: medicos,
+      total: medicos.length,
+      message: `Médicos encontrados con el nombre: ${nombre}`,
+      criterio: { tipo: 'nombre', valor: nombre }
     });
     
   } catch (error) {
     errorHandler(error, req, res, () => {});
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        apiLogger.error('Error cerrando conexión', { error: closeError.message });
-      }
-    }
   }
 };
 
@@ -184,32 +171,24 @@ const getEspecialidades = async (req, res) => {
   }
 };
 
-// Nuevo endpoint para estadísticas
+// Nuevo endpoint para estadísticas (desde API externa)
 const getEstadisticasMedicos = async (req, res) => {
-  let connection;
-  
   try {
-    connection = await getConnection();
-    const medicoService = new MedicoService(connection);
+    const external = new ExternalMedicosService();
+    const situationType = req.query.situationType || 'ACTIVE';
     
-    const estadisticas = await medicoService.obtenerEstadisticas();
+    apiLogger.info('Generando estadísticas de médicos desde API externa');
+    
+    const estadisticas = await external.obtenerEstadisticasMedicos({ situationType });
     
     res.status(200).json({
       success: true,
       data: estadisticas,
-      message: 'Estadísticas de médicos generadas correctamente'
+      message: 'Estadísticas de médicos generadas correctamente desde API externa'
     });
     
   } catch (error) {
     errorHandler(error, req, res, () => {});
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        apiLogger.error('Error cerrando conexión', { error: closeError.message });
-      }
-    }
   }
 };
 

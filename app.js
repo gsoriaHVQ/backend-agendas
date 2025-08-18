@@ -18,8 +18,7 @@ const agendaCustomRoutes = require('./routes/agendaCustom');
 const externalRoutes = require('./routes/external');
 
 // Servicios
-const MedicoService = require('./services/MedicoService');
-const getConnection = require('./db/connect');
+const getConnection = require('./db/connect'); // Solo para health check
 
 class App {
   constructor() {
@@ -149,77 +148,56 @@ class App {
   }
 
   async getMedicosByEspecialidadCompatibility(req, res) {
-    let connection;
     try {
-      connection = await getConnection();
-      const medicoService = new MedicoService(connection);
+      const ExternalMedicosService = require('./services/ExternalMedicosService');
+      const external = new ExternalMedicosService();
+      const especialidad = req.params.especialidad;
+      const situationType = req.query.situationType || 'ACTIVE';
       
-      const resultado = await medicoService.buscarPorEspecialidad(req.params.especialidad);
+      const medicos = await external.buscarMedicosPorEspecialidad(especialidad, { situationType });
       
       res.json({
         success: true,
-        data: resultado.data
+        data: medicos
       });
     } catch (error) {
       errorHandler(error, req, res, () => {});
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch (closeError) {
-          appLogger.error('Error cerrando conexión', { error: closeError.message });
-        }
-      }
     }
   }
 
   async getMedicosByCodigoItemCompatibility(req, res) {
-    let connection;
     try {
-      connection = await getConnection();
-      const medicoService = new MedicoService(connection);
+      const ExternalMedicosService = require('./services/ExternalMedicosService');
+      const external = new ExternalMedicosService();
+      const codigoItem = req.params.codigo_item;
+      const situationType = req.query.situationType || 'ACTIVE';
       
-      const resultado = await medicoService.buscarPorCodigoItem(req.params.codigo_item);
+      const medicos = await external.buscarMedicosPorCodigoItem(codigoItem, { situationType });
       
       res.json({
         success: true,
-        data: resultado.data
+        data: medicos
       });
     } catch (error) {
       errorHandler(error, req, res, () => {});
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch (closeError) {
-          appLogger.error('Error cerrando conexión', { error: closeError.message });
-        }
-      }
     }
   }
 
   async getMedicosByNombreCompatibility(req, res) {
-    let connection;
     try {
-      connection = await getConnection();
-      const medicoService = new MedicoService(connection);
+      const ExternalMedicosService = require('./services/ExternalMedicosService');
+      const external = new ExternalMedicosService();
+      const nombre = req.params.nombre;
+      const situationType = req.query.situationType || 'ACTIVE';
       
-      const resultado = await medicoService.buscarPorNombre(req.params.nombre);
+      const medicos = await external.buscarMedicosPorNombre(nombre, { situationType });
       
       res.json({
         success: true,
-        data: resultado.data
+        data: medicos
       });
     } catch (error) {
       errorHandler(error, req, res, () => {});
-    } finally {
-      if (connection) {
-        try {
-          await connection.close();
-        } catch (closeError) {
-          appLogger.error('Error cerrando conexión', { error: closeError.message });
-        }
-      }
     }
   }
 
