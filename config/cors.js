@@ -1,4 +1,5 @@
 const ALLOWED_ORIGINS = [
+  
   'http://localhost:3000',
   'http://localhost:3001', 
   'http://localhost:3002',
@@ -11,8 +12,13 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:3001',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:8080',
-  'http://127.0.0.1:4200'
+  'http://127.0.0.1:4200',
+  'http://127.0.0.1:4200',
+  'http://10.129.178.176:3000'
+
 ];
+
+
 
 const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
 
