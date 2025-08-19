@@ -26,7 +26,8 @@ const ALLOWED_HEADERS = ['Content-Type', 'Authorization', 'X-Requested-With'];
 
 class CorsConfig {
   static getOptions() {
-    const allowAll = process.env.CORS_ALLOW_ALL === 'true';
+    // Por defecto permite todos los orígenes, a menos que CORS_ALLOW_ALL sea 'false'
+    const allowAll = process.env.CORS_ALLOW_ALL !== 'false';
     const whitelist = this.isDevelopment() ? ALLOWED_ORIGINS : this.getProductionOrigins();
     return {
       // Cuando allowAll está activo, reflejar el origen (compatibe con credentials)
